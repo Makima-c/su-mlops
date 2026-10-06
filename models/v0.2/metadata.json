@@ -1,0 +1,66 @@
+{
+  "model_version": "v0.2",
+  "dataset": "sklearn.datasets.load_diabetes",
+  "dataset_scaled": true,
+  "feature_names": [
+    "age",
+    "sex",
+    "bmi",
+    "bp",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "target": "progression_index",
+  "random_state": 42,
+  "test_size": 0.2,
+  "model": {
+    "class": "RandomForestRegressor",
+    "params": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "criterion": "squared_error",
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 5,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 200,
+      "n_jobs": null,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    }
+  },
+  "tuning": {
+    "param_grid": {
+      "n_estimators": [
+        100,
+        200
+      ],
+      "max_depth": [
+        3,
+        5,
+        null
+      ],
+      "min_samples_leaf": [
+        1,
+        5
+      ]
+    },
+    "cv_folds": 5,
+    "cv_shuffle": true,
+    "cv_random_state": 42,
+    "cv_rmse": 57.73001364692078
+  },
+  "python_version": "3.13.7",
+  "sklearn_version": "1.9.1"
+}

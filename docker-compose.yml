@@ -2,7 +2,7 @@ services:
   api:
     build:
       context: .
-    image: su-mlops:v0.1
+    image: su-mlops:v0.2
     environment:
       PORT: "${PORT:-3000}"
     ports:

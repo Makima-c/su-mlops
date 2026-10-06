@@ -3,8 +3,8 @@
 !Dockerfile
 !pyproject.toml
 !uv.lock
-!server.py
+!server-v2.py
 !models/
-!models/v0.1/
-!models/v0.1/model.pkl
-!models/v0.1/metadata.json
+!models/v0.2/
+!models/v0.2/model.pkl
+!models/v0.2/metadata.json

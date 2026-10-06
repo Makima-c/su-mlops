@@ -14,11 +14,11 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PORT=80
 
 COPY --from=builder /app/.venv /app/.venv
-COPY server.py ./
-COPY models/v0.1/model.pkl models/v0.1/metadata.json ./models/v0.1/
+COPY server-v2.py ./
+COPY models/v0.2/model.pkl models/v0.2/metadata.json ./models/v0.2/
 
 USER 10001:10001
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['PORT'] + '/health', timeout=2).close()"
-CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers 1 --access-logfile - --error-logfile - server:app"]
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers 1 --access-logfile - --error-logfile - server-v2:app"]

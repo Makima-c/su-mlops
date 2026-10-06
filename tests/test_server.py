@@ -1,8 +1,7 @@
+import importlib
 from unittest.mock import Mock
 
 import pytest
-
-import server
 
 PAYLOAD = {
     "age": 0.02,
@@ -18,21 +17,29 @@ PAYLOAD = {
 }
 
 
+@pytest.fixture(params=["server", "server-v2"])
+def server_module(request):
+    return importlib.import_module(request.param)
+
+
 @pytest.fixture
-def client():
-    with server.app.test_client() as client:
+def client(server_module):
+    with server_module.app.test_client() as client:
         yield client
 
 
-def test_health(client):
+def test_health(client, server_module):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json == {"status": "ok", "model_version": server.MODEL_VERSION}
+    version = {"server": "v0.1", "server-v2": "v0.2"}[server_module.__name__]
+    assert response.json == {"status": "ok", "model_version": version}
 
 
-def test_predict_orders_features_and_returns_numeric_prediction(client, monkeypatch):
+def test_predict_orders_features_and_returns_numeric_prediction(
+    client, server_module, monkeypatch
+):
     predict = Mock(return_value=[123.45])
-    monkeypatch.setattr(server.model, "predict", predict)
+    monkeypatch.setattr(server_module.model, "predict", predict)
 
     response = client.post("/predict", json=dict(reversed(list(PAYLOAD.items()))))
 
@@ -40,8 +47,10 @@ def test_predict_orders_features_and_returns_numeric_prediction(client, monkeypa
     assert response.json == {"prediction": 123.45}
     predict.assert_called_once()
     features = predict.call_args.args[0]
-    assert features.columns.tolist() == server.FEATURE_NAMES
-    assert features.iloc[0].tolist() == [PAYLOAD[name] for name in server.FEATURE_NAMES]
+    assert features.columns.tolist() == server_module.FEATURE_NAMES
+    assert features.iloc[0].tolist() == [
+        PAYLOAD[name] for name in server_module.FEATURE_NAMES
+    ]
 
 
 def test_predict_rejects_missing_feature(client):
