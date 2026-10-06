@@ -1,0 +1,42 @@
+{
+  "model_version": "v0.1",
+  "dataset": "sklearn.datasets.load_diabetes",
+  "dataset_scaled": true,
+  "feature_names": [
+    "age",
+    "sex",
+    "bmi",
+    "bp",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "target": "progression_index",
+  "random_state": 42,
+  "test_size": 0.2,
+  "pipeline": {
+    "scaler": {
+      "class": "StandardScaler",
+      "params": {
+        "copy": true,
+        "with_mean": true,
+        "with_std": true
+      }
+    },
+    "regressor": {
+      "class": "LinearRegression",
+      "params": {
+        "copy_X": true,
+        "fit_intercept": true,
+        "n_jobs": null,
+        "positive": false,
+        "tol": 1e-06
+      }
+    }
+  },
+  "python_version": "3.13.7",
+  "sklearn_version": "1.9.1"
+}

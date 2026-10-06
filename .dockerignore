@@ -1,0 +1,10 @@
+# Only send the files needed to build the service image.
+**
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!server.py
+!models/
+!models/v0.1/
+!models/v0.1/model.pkl
+!models/v0.1/metadata.json

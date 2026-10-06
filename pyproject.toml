@@ -1,0 +1,26 @@
+[project]
+name = "su-mlops"
+version = "0.1.0"
+description = "MAIO assignment: reproducible diabetes progression baseline"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "flask>=3.1.3",
+    "gunicorn>=26.2.0",
+    "pandas",
+    "python-dotenv>=1.2.4",
+    "scikit-learn",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

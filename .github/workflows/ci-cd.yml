@@ -1,0 +1,97 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13.7'
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: '0.10.4'
+
+      - name: Install, lint, train and test
+        run: |
+          uv sync --locked
+          uv run --locked ruff check .
+          uv run --locked ruff format --check .
+          uv run --locked python train-baseline.py
+          uv run --locked python -m pytest -q
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: baseline-model
+          path: |
+            models/v0.1/model.pkl
+            models/v0.1/metrics.json
+            models/v0.1/metadata.json
+          if-no-files-found: error
+
+  cd:
+    needs: ci
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: releases
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      packages: write
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: baseline-model
+          path: models/v0.1
+
+      - name: Check version and build image
+        run: |
+          jq -e --arg version "$VERSION" '.model_version == $version' "models/$VERSION/metadata.json"
+          grep -Fx "## $VERSION" CHANGELOG.md
+          IMAGE="ghcr.io/$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          docker build -t "$IMAGE:$VERSION" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" .
+
+      - name: Container smoke tests
+        run: |
+          container=$(docker run -d -p 127.0.0.1:8080:80 "$IMAGE:$VERSION")
+          trap 'docker logs "$container"; docker rm -f "$container" >/dev/null' EXIT
+          base=http://127.0.0.1:8080
+          curl -fsS --max-time 3 --retry 15 --retry-delay 1 --retry-all-errors "$base/health" \
+            | jq -e --arg version "$VERSION" '.status == "ok" and .model_version == $version'
+          payload='{"age":0.02,"sex":-0.044,"bmi":0.06,"bp":-0.03,"s1":-0.02,"s2":0.03,"s3":-0.02,"s4":0.02,"s5":0.02,"s6":-0.001}'
+          curl -fsS --max-time 5 "$base/predict" -H 'Content-Type: application/json' -d "$payload" \
+            | jq -e '.prediction | type == "number"'
+          invalid=$(printf '%s' "$payload" | jq 'del(.s6)')
+          status=$(curl -sS --max-time 5 -o /tmp/predict-error.json -w '%{http_code}' \
+            "$base/predict" -H 'Content-Type: application/json' -d "$invalid")
+          test "$status" = 422
+          jq -e '.error and (.details | has("s6"))' /tmp/predict-error.json
+
+      - name: Publish image and GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:$VERSION"
+          docker tag "$IMAGE:$VERSION" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
+          gh release create "$VERSION" --verify-tag --title "$VERSION" \
+            --notes-file CHANGELOG.md \
+            "models/$VERSION/metrics.json" "models/$VERSION/metadata.json"
