@@ -25,15 +25,3 @@ With an 80/20 split and seed 42, there were 353 training rows and 89 test rows.
 Test RMSE was 53.8534.
 
 Added the Flask API, JSON input errors and a Docker image with the model included.
-
-## Reproduce the training
-
-With uv and Python 3.13.7, run from the repository root:
-
-```bash
-uv sync --locked
-uv run --locked python train-baseline.py
-uv run --locked python train-improved.py
-```
-
-Each script saves its model, metrics and metadata under `models/v0.1/` or `models/v0.2/`.

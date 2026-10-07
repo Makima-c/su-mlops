@@ -59,4 +59,16 @@ Missing or incorrect features return HTTP **422**. For example, missing `s6` ret
 
 `details` lists the invalid fields. Invalid JSON or a non-object body uses `details.body`.
 
-See [CHANGELOG.md](CHANGELOG.md) for model changes, RMSE comparisons and training commands.
+See [CHANGELOG.md](CHANGELOG.md) for model changes and RMSE comparisons.
+
+## Reproduce the training
+
+With uv and Python 3.13.7, run from the repository root:
+
+```bash
+uv sync --locked
+uv run --locked python train-baseline.py
+uv run --locked python train-improved.py
+```
+
+Each script saves its model, metrics and metadata under `models/v0.1/` or `models/v0.2/`.
